@@ -1,0 +1,52 @@
+version: "3.8"
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: shoppy-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: shoppy
+      MYSQL_USER: shoppy_user
+      MYSQL_PASSWORD: 12345678
+    volumes:
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    command: --tls-version=TLSv1.2,TLSv1.3 --pid-file=/var/run/mysqld/mysqld.pid
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "8080:80"
+
+  backend:
+    build: ./shoppy-backend
+    container_name: shoppy-backend
+    environment:
+      DB_HOST: mysql
+      DB_USER: shoppy_user
+      DB_PASS: 12345678
+      DB_NAME: shoppy
+      DB_PORT: 3306
+      JWT_SECRET: 681897d4f10dc107be238cd7b5c28a732d4c3593a10e0b17ca844d691455b953496799f3da160ab93331f5f64e434d0880969ed1728fb0048ad5ad338782fe5d
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mysql
+
+  frontend:
+    build: ./shoppy-frontend
+    container_name: shoppy-frontend
+    environment:
+      VITE_APP_API_BASE_URL: http://localhost:3000/api
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql-data:
